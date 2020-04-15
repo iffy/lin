@@ -1,19 +1,26 @@
+import algorithm
 import os
 import osproc
-import times
+import re
+import sequtils
+import streams
+import strformat
+import strutils
+import tables
 import terminal
 export terminal
-import strutils
-import strformat
-import tables
-import streams
+import times
 
 type
   UnknownFlag* = object of CatchableError
+  DuplicateName* = object of CatchableError
+
   Sequence* = ref object
     lin: Lin
     name: string
     help: string
+    reverse: bool
+    includes: seq[string]
   
   Step = object
     seqname: string
@@ -34,9 +41,10 @@ type
       boolVal*: bool
 
   Lin = ref object
-    sequences: seq[Sequence]
+    sequences: TableRef[string, Sequence]
     steps: seq[Step]
     variables: TableRef[string, Variable]
+    default_seqs: seq[string]
   
   RunStatus = enum
     resOk,
@@ -45,31 +53,66 @@ type
 
 const DELIM = ":"
 
+proc fullname*(s:Step):string {.inline.}
+
 proc newLin*():Lin =
   ## Make a new Lin. Typically, you should just use
   ## the singleton built-in to the library. This is mostly
   ## here for testing.
   result = Lin()
   result.variables = newTable[string, Variable]()
+  result.sequences = newTable[string, Sequence]()
 
-proc sequence*(lin:Lin, name:string, help = ""):Sequence =
-  result = Sequence(name: name, lin: lin, help:help)
-  lin.sequences.add(result)
+proc sequence*(lin:Lin, name:string, help = "", reverse = false, includes:seq[string] = @[], default = false):Sequence =
+  result = Sequence(name: name, lin: lin, help:help, reverse:reverse, includes:includes)
+  lin.sequences[name] = result
+  if default:
+    lin.default_seqs.add(name)
+
+proc seqname*(x:string):string {.inline.} = x.split(DELIM, 1)[0]
 
 proc collectSteps*(lin:Lin, keys:openArray[string]):seq[Step] =
   ## List the steps that will be run
+  # First group them by direction
   var
-    whole_seqs:seq[string]
-    specific:seq[string]
+    groups:seq[tuple[reverse:bool, keys:seq[string]]]
+  groups.add((reverse:false, keys: @[]))
   for key in keys:
-    if key.find(DELIM) == -1:
-      whole_seqs.add(key)
-    elsE:
-      specific.add(key)
+    let seqname = key.seqname
+    if not lin.sequences.hasKey(seqname):
+      raise newException(KeyError, &"No such sequence: {key}")
+    let s = lin.sequences[seqname]
+    if s.reverse != groups[^1].reverse:
+      # new direction
+      groups.add((reverse:s.reverse, keys: @[]))
+    groups[^1].keys.add(key)
 
-  for step in lin.steps:
-    if step.seqname in whole_seqs:
-      result.add(step)
+  for group in groups:
+    var
+      whole_seqs:seq[string]
+      specific:seq[string]
+      toadd:seq[Step]
+    for key in group.keys:
+      if key.find(DELIM) == -1:
+        whole_seqs.add(key)
+        if not lin.sequences.hasKey(key):
+          raise newException(KeyError, &"No such sequence: {key}")
+        let s = lin.sequences[key]
+        whole_seqs.add(s.includes)
+      else:
+        specific.add(key)
+
+    for step in lin.steps:
+      if step.seqname in whole_seqs:
+        toadd.add(step)
+    if group.reverse:
+      result.add(toadd.reversed())
+    else:
+      result.add(toadd)
+
+proc listSteps*(lin:Lin, keys:openArray[string]):seq[string] =
+  ## List step names that will be run
+  return lin.collectSteps(keys).mapIt(it.fullname)
 
 proc helptext*(lin:Lin):string =
   ## Return the block of helptext for the particular context
@@ -91,22 +134,40 @@ proc helptext*(lin:Lin):string =
   result.add "  -l        - List sequences without running\L"
   # Sequences
   result.add "\LSequences\L"
-  for s in lin.sequences:
-    result.add &"  {s.name}  {s.help}\L"
+  for s in lin.sequences.values:
+    result.add &"  {s.name}  {s.help}"
+    if s.includes.len > 0:
+      let space = " ".repeat(s.name.len)
+      let include_str = s.includes.join(",")
+      result.add &"  {space}  includes: {include_str}"
+    result.add "\L"
   # Usage
 
 #-------------------------
 # Variables
 #-------------------------
+proc normalizeVar(name:string):string =
+  result = name.toLowerAscii()
+  if result.find(re"[^a-z0-9-]") != -1:
+    raise newException(ValueError, &"Invalid variable name: {name}")
+
+proc saveVar(lin:Lin, v:Variable) =
+  let name = v.name.normalizeVar()
+  if lin.variables.hasKey(name):
+    raise newException(DuplicateName, &"Variable {name} already defined")
+  lin.variables[name] = v
+
 proc strVar*(lin:Lin, name:string, default = "", help = ""):Variable =
   ## Define a new variable that can be used in build steps
+  let name = name.normalizeVar()
   result = Variable(name:name, kind:StringVar, strVal:default, help:help)
-  lin.variables[name] = result
+  lin.saveVar(result)
 
 proc boolVar*(lin:Lin, name:string, help = ""):Variable =
   ## Define a new boolean flag
+  let name = name.normalizeVar()
   result = Variable(name:name, kind:BooleanVar, boolVal:false, help:help)
-  lin.variables[name] = result
+  lin.saveVar(result)
 
 proc extractVarFlags*(lin:Lin, params:openArray[string]):seq[string] =
   ## Remove --var-flags from a sequence of command-line args
@@ -156,7 +217,7 @@ proc step*(s:Sequence, name:string, fn:proc()) =
 proc fullname*(s:Step):string {.inline.} = s.seqname & DELIM & s.name
 
 proc stamp(d:Duration):string =
-  "(" & $d.inMilliseconds & "ms)"
+  "(" & $d.inSeconds & "s)"
 
 proc run*(lin:Lin, args:openArray[string]):bool =
   system.addQuitProc(resetAttributes)
@@ -206,12 +267,25 @@ proc run*(lin:Lin, args:openArray[string]):bool =
 
 proc cli*(lin:Lin) =
   var params = commandLineParams()
-  if "--help" in params:
+  if "--help" in params or "-h" in params:
     echo lin.helptext()
     quit(0)
+  var runmode = "run"
+  if "-l" in params:
+    params = params.filterIt(it != "-l")
+    runmode = "list"
   params = lin.extractVarFlags(params)
-  if not lin.run(params):
+  if params.len == 0:
+    params = lin.default_seqs
+  if params.len == 0:
+    echo "No sequences chosen. See --help for more info"
     quit(1)
+  if runmode == "list":
+    for x in lin.listSteps(params):
+      echo x
+  else:
+    if not lin.run(params):
+      quit(1)
 
 
 #-------------------------

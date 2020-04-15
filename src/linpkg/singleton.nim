@@ -6,11 +6,12 @@ let singleton = newLin()
 proc cli*() =
   singleton.cli()
 
-proc sequence*(name:string, help = ""):Sequence =
-  singleton.sequence(name, help)
+template sequence*(args: varargs[untyped]):untyped =
+  singleton.sequence(args)
 
-proc strVar*(name:string, default = "", help = ""):Variable =
-  singleton.strVar(name, default, help)
+template strVar*(args: varargs[untyped]):untyped =
+  singleton.strVar(args)
 
-proc boolVar*(name: string, help = ""):Variable =
-  singleton.boolVar(name, help)
+template boolVar*(args: varargs[untyped]):untyped =
+  singleton.boolVar(args)
+

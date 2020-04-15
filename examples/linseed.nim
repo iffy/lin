@@ -1,8 +1,11 @@
 import os
 import lin
 
-var build = sequence("build")
-var clean = sequence("clean")
+var build = sequence("build", default = true)
+var clean = sequence("clean", reverse = true)
+
+let debug = boolVar("debug")
+let name = strVar("name", default = "bob")
 
 build.step "first":
   try:
@@ -19,7 +22,10 @@ clean.step "second":
   discard
 
 build.step "second":
-  discard
+  echo "hello, ", name.strVal
+  if debug.boolVal:
+    echo "DEBUG OUTPUT"
+  sleep(20)
 
 if isMainModule:
   cli()

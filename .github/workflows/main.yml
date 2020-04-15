@@ -1,0 +1,25 @@
+name: tests
+
+on:
+  pull_request: true
+  push:
+    branches-ignore: [gh-pages]
+  schedule:
+    - cron: '0 0 * * 1'
+
+jobs:
+  tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        nimversion: [stable]
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+    steps:
+    - uses: actions/checkout@v1
+    - uses: iffy/install-nim@v1
+      with:
+        nimversion: ${{ matrix.nimversion }}
+    - name: Test
+      run: |
+        nimble test
+        nimble refresh

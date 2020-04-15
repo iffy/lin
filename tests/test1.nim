@@ -25,8 +25,46 @@ test "basic run":
 
 test "sequence help":
   var i = newLin()
-  var build = i.sequence("build", help="Something")
+  discard i.sequence("build", help="Something")
   check "Something" in i.helptext()
+
+test "list steps":
+  var i = newLin()
+  var a = i.sequence("a")
+  var b = i.sequence("b")
+  a.step "1": discard
+  b.step "2": discard
+  a.step "3": discard
+  check i.listSteps(["a"]) == @["a:1", "a:3"]
+  check i.listSteps(["b"]) == @["b:2"]
+  check i.listSteps(["a", "b"]) == @["a:1", "b:2", "a:3"]
+  check i.listSteps(["b", "a", "a"]) == @["a:1", "b:2", "a:3"]
+
+test "reverse":
+  var i = newLin()
+  var a = i.sequence("a")
+  var b = i.sequence("b", reverse=true)
+  a.step "1": discard
+  b.step "2": discard
+  b.step "3": discard
+  a.step "4": discard
+
+  check i.listSteps(["b"]) == @["b:3", "b:2"]
+  check i.listSteps(["a", "b"]) == @["a:1", "a:4", "b:3", "b:2"]
+  check i.listSteps(["b", "a"]) == @["b:3", "b:2", "a:1", "a:4"]
+
+test "includes":
+  var i = newLin()
+  var a = i.sequence("a")
+  var b = i.sequence("b", includes = @["a"])
+  a.step "1": discard
+  b.step "2": discard
+  a.step "3": discard
+
+  check i.listSteps(["a"]) == @["a:1", "a:3"]
+  check i.listSteps(["b"]) == @["a:1", "b:2", "a:3"]
+  check i.listSteps(["a", "b"]) == @["a:1", "b:2", "a:3"]
+  check i.listSteps(["b", "a"]) == @["a:1", "b:2", "a:3"]
 
 test "variable default":
   var o:seq[string]
@@ -60,6 +98,31 @@ test "command line variables":
   let leftover = i.extractVarFlags(["--foo", "hi", "extra"])
   check leftover == @["extra"]
   check foo.strVal == "hi"
+
+test "variable dupe":
+  var i = newLin()
+  discard i.strVar("first")
+  expect Exception:
+    discard i.strVar("first")
+  expect Exception:
+    discard i.strVar("fIRST")
+
+test "variable allowed chars":
+  var i = newLin()
+  let not_allowed = @[
+    "foo_bar",
+    "foo.bar",
+    "foo/bar",
+    "foo=bar",
+    "foo+bar",
+    "foo bar",
+    "foo\tbar",
+  ]
+  for x in not_allowed:
+    expect Exception:
+      discard i.strVar(x)
+    expect Exception:
+      discard i.boolVar(x)
 
 test "unknown vars":
   var i = newLin()
