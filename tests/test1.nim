@@ -34,6 +34,21 @@ test "run single step":
   assert o.len == 1
   assert o[0] == "1"
 
+# test "range of steps":
+#   var i = newLin()
+#   var a = i.sequence("a")
+#   var b = i.sequence("b")
+#   a.step "1": discard
+#   a.step "2": discard
+#   b.step "3": discard
+#   check i.listSteps(["a:1..b:3"]) == @["a:1", "a:2", "b:3"]
+#   check i.listSteps(["a:1..a:2"]) == @["a:1", "a:2"]
+#   check i.listSteps(["a:2..b:3"]) == @["a:2", "b:3"]
+#   check i.listSteps(["a:2..b:3"]) == @["a:2", "b:3"]
+#   check i.listSteps(["..a:2"]) == @["a:1", "a:2"]
+#   check i.listSteps(["a:1.."]) == @["a:1", "a:2"]
+#   check i.listSteps(["a:2.."]) == @["a:2"]
+
 test "sequence help":
   var i = newLin()
   discard i.sequence("build", help="Something")
@@ -175,6 +190,7 @@ test "skip":
 
 test "sh":
   sh "echo", "foo"
+  sh "ls"
 
 test "sh fail":
   expect Exception:

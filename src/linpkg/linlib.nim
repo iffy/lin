@@ -276,6 +276,7 @@ proc run*(lin:Lin, args:openArray[string]):bool =
   stderr.writeLine(&"[lin] all done {grand_total.stamp}")
 
 proc cli*(lin:Lin) =
+  setStdIoUnbuffered()
   var params = commandLineParams()
   if "--help" in params or "-h" in params:
     echo lin.helptext()
