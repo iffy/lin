@@ -184,17 +184,6 @@ test "shmaybe":
   shmaybe "true"
   shmaybe "false"
 
-test "shout":
-  let o = shout("echo", "foo")
-  check o == "foo\n"
-  expect Exception:
-    discard shout "false"
-
-test "shmout":
-  let o = shmout("false")
-  check o == ""
-  check "hey\L" == shmout("echo", "hey")
-
 test "cd":
   withtmp:
     let expected = tmpdir.absolutePath

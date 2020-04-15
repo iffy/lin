@@ -305,36 +305,15 @@ type
   SubprocessError* = object of CatchableError
   RunResult = tuple
     cmdstr: string
-    outp: string
-    errp: string
     rc: int
 
 proc run*(args:seq[string]):RunResult =
   let cmdstr = args.join(" ")
   stderr.styledWriteLine("[lin] ", styleDim, &"# {cmdstr}")
-  var p = startProcess(args[0], args = args[1..^1], options = {poUsePath})
-  var
-    outp:string
-    errp:string
-    oh = p.outputStream()
-    eh = p.errorStream()
-
-  while not oh.atEnd() or not eh.atEnd():
-    while not oh.atEnd():
-      let line = oh.readLine() & "\L"
-      # echo "stdout line: ", line.repr
-      stdout.write(line)
-      outp.add(line)
-    while not eh.atEnd():
-      let line = eh.readLine() & "\L"
-      # echo "stderr line: ", line.repr
-      stderr.write(line)
-      errp.add(line)
-
-  # let rc = p.waitForExit()
+  var p = startProcess(args[0], args = args[1..^1], options = {poParentStreams, poUsePath})
+  let rc = p.waitForExit()
   p.close()
-  let rc = p.peekExitCode()
-  result = (cmdstr, outp, errp, rc)
+  result = (cmdstr, rc)
 
 proc sh*(args:varargs[string]) =
   ## Run a subprocess, failing if it fails
@@ -345,18 +324,6 @@ proc sh*(args:varargs[string]) =
 proc shmaybe*(args:varargs[string]) =
   ## Run a subprocess, ignoring exit code
   discard run(@args)
-
-proc shout*(args:varargs[string]):string =
-  ## Run a subprocess, capturing output
-  let ret = run(@args)
-  result = ret.outp
-  if ret.rc != 0:
-    raise newException(SubprocessError, &"Error executing: {ret.cmdstr}")
-
-proc shmout*(args:varargs[string]):string =
-  ## Run a subprocess, capturing output, ignoring exit code
-  let ret = run(@args)
-  result = ret.outp & ret.errp
 
 template cd*(newdir:string, body:untyped):untyped =
   ## Do some code within a new directory
