@@ -24,6 +24,7 @@ when isMainModule:
     "-r",
     "--debuginfo:off",
     "--hints:off",
+    "--verbosity:0",
     path,
   ]
   args.add(params)

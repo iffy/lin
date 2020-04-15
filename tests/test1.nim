@@ -150,6 +150,18 @@ test "bool vars":
   check leftover == @["hi", "extra"]
   check foo.boolVal == true
 
+test "skip":
+  var o:seq[string]
+  var i = newLin()
+  var build = i.sequence("build")
+  build.step "1":
+    o.add("1")
+    skip "No need to run this"
+    o.add("2")
+  check i.run(["build"])
+  assert o.len == 1
+  assert o[0] == "1"
+
 test "sh":
   sh "echo", "foo"
 
@@ -177,3 +189,25 @@ test "cd":
     let expected = tmpdir.absolutePath
     cd tmpdir:
       check getCurrentDir().absolutePath == expected
+
+suite "olderThan":
+  test "basic":
+    withtmp:
+      writeFile("first", "stuff")
+      sleep(1000)
+      writeFile("second", "more stuff")
+      check "first".olderThan("second")
+      check (@["first"]).olderThan("second")
+      check (@["first"]).olderThan(@["second"])
+      check "first".olderThan(@["second"])
+
+      check not "second".olderThan("first")
+      check not (@["second"]).olderThan("first")
+      check not (@["second"]).olderThan(@["first"])
+      check not "second".olderThan(@["first"])
+  
+  test "non-existent dst file":
+    withtmp:
+      writeFile("source", "stuff")
+      check "dne".olderThan("source")
+  

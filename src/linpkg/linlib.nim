@@ -15,6 +15,7 @@ import times
 type
   UnknownFlag* = object of CatchableError
   DuplicateName* = object of CatchableError
+  SkipSignal* = object of CatchableError
 
   Sequence* = ref object
     lin: Lin
@@ -245,6 +246,9 @@ proc run*(lin:Lin, args:openArray[string]):bool =
       step.fn()
       step_total = getTime() - start
       res = resOk
+    except SkipSignal:
+      res = resSkip
+      msg = getCurrentExceptionMsg()
     except:
       res = resFail
       msg = getCurrentExceptionMsg()
@@ -296,7 +300,7 @@ proc cli*(lin:Lin) =
 
 
 #-------------------------
-# Utilities
+# Utilities for writing linseed files
 #-------------------------
 type
   SubprocessError* = object of CatchableError
@@ -369,3 +373,44 @@ template cd*(newdir:string, body:untyped):untyped =
     if newabs != olddir:
       stderr.styledWriteLine("[lin] ", styleDim, "# cd " & olddir.relativePath(newabs))
       setCurrentDir(olddir)
+
+proc skip*(reason = "") =
+  raise newException(SkipSignal, reason)
+
+proc olderThan*(output:openArray[string], input:openArray[string]):bool =
+  ## Returns true if any ``src`` is newer than the oldest ``targets``.
+  ##
+  ## .. code-block:: nim
+  ##   import nake, os
+  ##
+  ##   let
+  ##     src = @["prog.nim", "prog2.nim"]
+  ##     dst = @["prog.out", "prog_stats.txt"]
+  ##   if dst.olderThan(src):
+  ##      echo "Refreshing ..."
+  ##      # do something to generate the outputs
+  ##   else:
+  ##      echo "All done!"
+  assert len(input) > 0, "Must include some source files"
+  var minTargetTime = low(Time)
+  for target in output:
+    try:
+      let targetTime = getLastModificationTime(target)
+      if minTargetTime == low(Time):
+        minTargetTime = targetTime
+      elif targetTime < minTargetTime:
+        minTargetTime = targetTime
+    except OSError:
+      return true
+
+  for s in input:
+    try:
+      let srcTime = getLastModificationTime(s)
+      if srcTime > minTargetTime:
+        return true
+    except OSError:
+      raise newException(CatchableError, "Error accessing file: " & s)
+
+proc olderThan*(output:string, input:openArray[string]):bool {.inline.} = olderThan([output], input)
+proc olderThan*(output:openArray[string], input:string):bool {.inline.} = olderThan(output, [input])
+proc olderThan*(output:string, input:string):bool {.inline.} = olderThan([output], [input])
