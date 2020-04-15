@@ -23,6 +23,17 @@ test "basic run":
   assert o.len == 1
   assert o[0] == "1"
 
+test "run single step":
+  var o:seq[string]
+  var i = newLin()
+  var build = i.sequence("build")
+
+  build.step "1":
+    o.add("1")
+  check i.run(["build:1"])
+  assert o.len == 1
+  assert o[0] == "1"
+
 test "sequence help":
   var i = newLin()
   discard i.sequence("build", help="Something")

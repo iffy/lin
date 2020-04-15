@@ -18,6 +18,7 @@ when isMainModule:
         echo "Could not find linseed.nim"
         quit(1)
       dirname = dirname.parentDir()
+  setCurrentDir(dirname)
   let params = commandLineParams()
   var args = @[
     "c",
@@ -25,7 +26,7 @@ when isMainModule:
     "--debuginfo:off",
     "--hints:off",
     "--verbosity:0",
-    path,
+    "linseed.nim",
   ]
   args.add(params)
   let p = startProcess("nim", args = args,

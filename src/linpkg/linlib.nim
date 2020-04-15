@@ -111,7 +111,7 @@ proc collectSteps*(lin:Lin, keys:openArray[string]):seq[Step] =
         specific.add(key)
 
     for step in lin.steps:
-      if step.seqname in whole_seqs:
+      if step.seqname in whole_seqs or step.fullname in specific:
         toadd.add(step)
     if group.reverse:
       result.add(toadd.reversed())
@@ -125,9 +125,9 @@ proc listSteps*(lin:Lin, keys:openArray[string]):seq[string] =
 proc helptext*(lin:Lin):string =
   ## Return the block of helptext for the particular context
   # Variables
-  result.add "Variables\L"
+  result.add "Variables"
   for v in lin.variables.values:
-    result.add &"  --{v.name}"
+    result.add &"\L  --{v.name}"
     case v.kind
     of BooleanVar:
       discard
@@ -215,9 +215,8 @@ proc extractVarFlags*(lin:Lin, params:openArray[string]):seq[string] =
 #-------------------------
 # Sequences
 #-------------------------
-proc step*(s:Sequence, name:string, fn:proc()) =
-  ## Add a step to the given sequence
-  s.lin.steps.add(Step(seqname: s.name, name: name, fn: fn))
+template step*(s:Sequence, nm:string, fun:untyped) =
+  s.lin.steps.add(Step(seqname: s.name, name: nm, fn: proc() = fun))
 
 #-------------------------
 # Steps
