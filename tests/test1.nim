@@ -66,6 +66,19 @@ test "includes":
   check i.listSteps(["a", "b"]) == @["a:1", "b:2", "a:3"]
   check i.listSteps(["b", "a"]) == @["a:1", "b:2", "a:3"]
 
+test "includes nested":
+  var i = newLin()
+  var a = i.sequence("a")
+  var b = i.sequence("b", includes = @["a"])
+  var c = i.sequence("c", includes = @["b"])
+
+  a.step "1": discard
+  b.step "2": discard
+  c.step "3": discard
+  check i.listSteps(["c"]) == @["a:1", "b:2", "c:3"]
+  check i.listSteps(["c", "a"]) == @["a:1", "b:2", "c:3"]
+  check i.listSteps(["b", "c", "a"]) == @["a:1", "b:2", "c:3"]
+
 test "variable default":
   var o:seq[string]
   var i = newLin()

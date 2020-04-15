@@ -1,5 +1,6 @@
 import algorithm
 import os
+export os
 import osproc
 import re
 import sequtils
@@ -69,6 +70,13 @@ proc sequence*(lin:Lin, name:string, help = "", reverse = false, includes:seq[st
   if default:
     lin.default_seqs.add(name)
 
+proc allIncludes(lin:Lin, key:string):seq[string] =
+  ## Return all the includes (recursively) for a sequence name
+  var s = lin.sequences[key]
+  for x in s.includes:
+    result.add(lin.allIncludes(x))
+  result.add(s.includes)
+
 proc seqname*(x:string):string {.inline.} = x.split(DELIM, 1)[0]
 
 proc collectSteps*(lin:Lin, keys:openArray[string]):seq[Step] =
@@ -97,8 +105,7 @@ proc collectSteps*(lin:Lin, keys:openArray[string]):seq[Step] =
         whole_seqs.add(key)
         if not lin.sequences.hasKey(key):
           raise newException(KeyError, &"No such sequence: {key}")
-        let s = lin.sequences[key]
-        whole_seqs.add(s.includes)
+        whole_seqs.add(lin.allIncludes(key))
       else:
         specific.add(key)
 
@@ -139,7 +146,7 @@ proc helptext*(lin:Lin):string =
     if s.includes.len > 0:
       let space = " ".repeat(s.name.len)
       let include_str = s.includes.join(",")
-      result.add &"  {space}  includes: {include_str}"
+      result.add &"\L  {space}  includes: {include_str}"
     result.add "\L"
   # Usage
 
