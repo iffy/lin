@@ -8,11 +8,10 @@ Install the `lin` executable and `lin` nimble package with:
 nimble install https://github.com/iffy/lin
 ```
 
-Make a basic `linseed.nim` file:
+Make a `linseed.nim` file:
 
 ```nim
-# linseed.nim
-import lib
+import lin
 
 var build = sequence("build", help = "Say hello")
 var clean = sequence("clean", help = "Clean up hello", reverse = true)
