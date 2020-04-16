@@ -1,4 +1,4 @@
-Lin is a *lin*ear build system.
+Lin is a *lin*ear build system.  Steps are run from top to bottom.
 
 # Getting started
 
@@ -66,9 +66,9 @@ Go [read the full docs](https://www.iffycan.com/lin/linlib.html), but here's a h
 
 | Thing | Description |
 |---|---|
-| `sequence()` | Name a new sequence of steps |
-| `strVar()` | Define a string variable (which can be seen in the `--help` documentation) |
-| `boolVar()` | Define a boolean variable |
+| `sequence` | Name a new sequence of steps |
+| `strVar` | Define a string variable (which can be seen in the `--help` documentation) |
+| `boolVar` | Define a boolean variable |
 | `sh` | Run a subprocess, aborting on error |
 | `shmaybe` | Run a subprocess, ignoring exit code |
 | `cd` | Run a block of code from within another directory |
