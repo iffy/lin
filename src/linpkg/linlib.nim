@@ -4,7 +4,6 @@ export os
 import osproc
 import re
 import sequtils
-import streams
 import strformat
 import strutils
 import tables
