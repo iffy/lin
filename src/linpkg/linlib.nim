@@ -42,9 +42,9 @@ type
       boolVal*: bool
 
   Lin = ref object
-    sequences: TableRef[string, Sequence]
+    sequences: OrderedTableRef[string, Sequence]
     steps: seq[Step]
-    variables: TableRef[string, Variable]
+    variables: OrderedTableRef[string, Variable]
     default_seqs: seq[string]
   
   RunStatus = enum
@@ -61,8 +61,8 @@ proc newLin*():Lin =
   ## the singleton built-in to the library. This is mostly
   ## here for testing.
   result = Lin()
-  result.variables = newTable[string, Variable]()
-  result.sequences = newTable[string, Sequence]()
+  result.variables = newOrderedTable[string, Variable]()
+  result.sequences = newOrderedTable[string, Sequence]()
 
 proc sequence*(lin:Lin, name:string, help = "", reverse = false, includes:seq[string] = @[], default = false):Sequence =
   result = Sequence(name: name, lin: lin, help:help, reverse:reverse, includes:includes)
