@@ -141,13 +141,16 @@ proc helptext*(lin:Lin):string =
   result.add "  -l        - List sequences without running\L"
   # Sequences
   result.add "\LSequences\L"
-  for s in lin.sequences.values:
-    result.add &"  {s.name}  {s.help}"
-    if s.includes.len > 0:
-      let space = " ".repeat(s.name.len)
-      let include_str = s.includes.join(",")
-      result.add &"\L  {space}  includes: {include_str}"
-    result.add "\L"
+  if lin.sequences.len > 0:
+    var biggest_seqname = toSeq(lin.sequences.keys()).mapIt(it.len).max()
+    for s in lin.sequences.values:
+      let name_padding = " ".repeat(biggest_seqname - s.name.len)
+      result.add &"  {s.name}{name_padding} - {s.help}"
+      if s.includes.len > 0:
+        let space = " ".repeat(biggest_seqname)
+        let include_str = s.includes.join(",")
+        result.add &"\L  {space}   includes: {include_str}"
+      result.add "\L"
   # Usage
 
 #-------------------------

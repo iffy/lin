@@ -2,6 +2,7 @@ import unittest
 import lin
 import os
 import strutils
+import sequtils
 
 const tmpdir = "somefake_lindir"
 template withtmp(body:untyped):untyped =
@@ -53,6 +54,20 @@ test "sequence help":
   var i = newLin()
   discard i.sequence("build", help="Something")
   check "Something" in i.helptext()
+
+test "help with empty linseed should not raise error":
+  var i = newLin()
+  discard i.helptext()
+
+test "sequences ordered by definition order":
+  var i = newLin()
+  let seqs = @["aseq", "bseq", "fseq", "gseq", "eseq", "dseq", "cseq"]
+  for s in seqs:
+    discard i.sequence(s)
+  let h = i.helptext()
+  let indexes = seqs.mapIt(h.find(it))
+  echo "INDEXES: ", indexes
+  echo h
 
 test "list steps":
   var i = newLin()
