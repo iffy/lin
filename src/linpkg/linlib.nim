@@ -52,7 +52,7 @@ type
     resFail,
     resSkip,
 
-const DELIM = ":"
+const DELIM = "/"
 
 proc fullname*(s:Step):string {.inline.}
 
@@ -71,7 +71,7 @@ proc sequence*(lin:Lin, name:string, help = "", reverse = false, includes:seq[st
     lin.default_seqs.add(name)
 
 proc allIncludes(lin:Lin, key:string):seq[string] =
-  ## Return all the includes (recursively) for a sequence name
+  ## Return all the included sequence names (recursively) for a sequence name
   var s = lin.sequences[key]
   for x in s.includes:
     result.add(lin.allIncludes(x))
@@ -79,13 +79,66 @@ proc allIncludes(lin:Lin, key:string):seq[string] =
 
 proc seqname*(x:string):string {.inline.} = x.split(DELIM, 1)[0]
 
+iterator expandRanges(lin:Lin, keys:openArray[string]):string =
+  for key in keys:
+    let parts = key.split("..")
+    if parts.len == 1:
+      # not a range
+      yield key
+    elif parts.len == 2:
+      # range
+      var
+        a = parts[0]
+        b = parts[1]
+      if a == "":
+        # ..b
+        a = b.seqname
+      elif b == "":
+        # a..
+        b = a.seqname
+
+      var seqs_to_traverse:seq[string]
+      seqs_to_traverse.add(a.seqname)
+      seqs_to_traverse.add(b.seqname)
+      seqs_to_traverse.add(lin.allIncludes(a.seqname))
+      seqs_to_traverse.add(lin.allIncludes(b.seqname))
+
+      let steps = if lin.sequences[a.seqname].reverse: lin.steps.reversed() else: lin.steps
+
+      if a.find(DELIM) == -1:
+        # a is a sequence name, find the first step
+        for step in steps:
+          if step.seqname in seqs_to_traverse:
+            a = step.fullname
+            break
+      if b.find(DELIM) == -1:
+        # b is a sequence name, find the last step
+        for step in steps:
+          if step.seqname in seqs_to_traverse:
+            b = step.fullname
+      
+      var started = false
+      for step in steps:
+        if not started:
+          if step.fullname == a:
+            started = true
+          else:
+            continue
+        # inside the range
+        if step.seqname in seqs_to_traverse:
+          yield step.fullname
+        if step.fullname == b:
+          break
+    else:
+      raise newException(CatchableError, "Invalid step name: " & key)
+
 proc collectSteps*(lin:Lin, keys:openArray[string]):seq[Step] =
   ## List the steps that will be run
-  # First group them by direction
+  # Group them by direction
   var
     groups:seq[tuple[reverse:bool, keys:seq[string]]]
   groups.add((reverse:false, keys: @[]))
-  for key in keys:
+  for key in lin.expandRanges(keys):
     let seqname = key.seqname
     if not lin.sequences.hasKey(seqname):
       raise newException(KeyError, &"No such sequence: {key}")
@@ -123,6 +176,17 @@ proc listSteps*(lin:Lin, keys:openArray[string]):seq[string] =
 
 proc helptext*(lin:Lin):string =
   ## Return the block of helptext for the particular context
+  result.add """Usage
+
+  lin [variables] [flags] [sequence [sequence...]]
+  
+  Sequences can be provided in the following ways:
+    
+    1. Sequence name:   build
+    2. Step name:       build/first-step
+    3. Range:           build..deploy/last-step
+
+"""
   # Variables
   result.add "Variables"
   for v in lin.variables.values:

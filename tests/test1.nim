@@ -31,24 +31,58 @@ test "run single step":
 
   build.step "1":
     o.add("1")
-  check i.run(["build:1"])
+  check i.run(["build/1"])
   assert o.len == 1
   assert o[0] == "1"
 
-# test "range of steps":
-#   var i = newLin()
-#   var a = i.sequence("a")
-#   var b = i.sequence("b")
-#   a.step "1": discard
-#   a.step "2": discard
-#   b.step "3": discard
-#   check i.listSteps(["a:1..b:3"]) == @["a:1", "a:2", "b:3"]
-#   check i.listSteps(["a:1..a:2"]) == @["a:1", "a:2"]
-#   check i.listSteps(["a:2..b:3"]) == @["a:2", "b:3"]
-#   check i.listSteps(["a:2..b:3"]) == @["a:2", "b:3"]
-#   check i.listSteps(["..a:2"]) == @["a:1", "a:2"]
-#   check i.listSteps(["a:1.."]) == @["a:1", "a:2"]
-#   check i.listSteps(["a:2.."]) == @["a:2"]
+test "range":
+  var i = newLin()
+  var a = i.sequence("a")
+  var b = i.sequence("b")
+  a.step "1": discard
+  a.step "2": discard
+  b.step "3": discard
+  b.step "4": discard
+  b.step "5": discard
+  check i.listSteps(["a/1..b/3"]) == @["a/1", "a/2", "b/3"]
+  check i.listSteps(["a/1..a/2"]) == @["a/1", "a/2"]
+  check i.listSteps(["a/2..b/3"]) == @["a/2", "b/3"]
+  check i.listSteps(["a/2..b/3"]) == @["a/2", "b/3"]
+  check i.listSteps(["..a/2"]) == @["a/1", "a/2"]
+  check i.listSteps(["a/1.."]) == @["a/1", "a/2"]
+  check i.listSteps(["a/2.."]) == @["a/2"]
+  check i.listSteps(["a..b"]) == @["a/1", "a/2", "b/3", "b/4", "b/5"]
+  check i.listSteps(["b.."]) == @["b/3", "b/4", "b/5"]
+  check i.listSteps(["..b"]) == @["b/3", "b/4", "b/5"]
+
+test "range with includes":
+  var i = newLin()
+  var a = i.sequence("a")
+  var c = i.sequence("c")
+  var b = i.sequence("b", includes = @["a"])
+  a.step "1": discard
+  a.step "2": discard
+  c.step "a": discard
+  b.step "3": discard
+  c.step "b": discard
+  b.step "4": discard
+  c.step "c": discard
+  b.step "5": discard
+
+  check i.listSteps(["a..b"]) == @["a/1", "a/2", "b/3", "b/4", "b/5"]
+
+test "range reverse":
+  var i = newLin()
+  var a = i.sequence("a", reverse=true)
+  var b = i.sequence("b", reverse=true)
+  a.step "1": discard
+  a.step "2": discard
+  b.step "3": discard
+  b.step "4": discard
+  b.step "5": discard
+  check i.listSteps(["a.."]) == @["a/2", "a/1"]
+  check i.listSteps(["b/5..a/2"]) == @["b/5", "b/4", "b/3", "a/2"]
+  check i.listSteps(["..b"]) == @["b/5", "b/4", "b/3"]
 
 test "sequence help":
   var i = newLin()
@@ -76,10 +110,10 @@ test "list steps":
   a.step "1": discard
   b.step "2": discard
   a.step "3": discard
-  check i.listSteps(["a"]) == @["a:1", "a:3"]
-  check i.listSteps(["b"]) == @["b:2"]
-  check i.listSteps(["a", "b"]) == @["a:1", "b:2", "a:3"]
-  check i.listSteps(["b", "a", "a"]) == @["a:1", "b:2", "a:3"]
+  check i.listSteps(["a"]) == @["a/1", "a/3"]
+  check i.listSteps(["b"]) == @["b/2"]
+  check i.listSteps(["a", "b"]) == @["a/1", "b/2", "a/3"]
+  check i.listSteps(["b", "a", "a"]) == @["a/1", "b/2", "a/3"]
 
 test "reverse":
   var i = newLin()
@@ -90,9 +124,9 @@ test "reverse":
   b.step "3": discard
   a.step "4": discard
 
-  check i.listSteps(["b"]) == @["b:3", "b:2"]
-  check i.listSteps(["a", "b"]) == @["a:1", "a:4", "b:3", "b:2"]
-  check i.listSteps(["b", "a"]) == @["b:3", "b:2", "a:1", "a:4"]
+  check i.listSteps(["b"]) == @["b/3", "b/2"]
+  check i.listSteps(["a", "b"]) == @["a/1", "a/4", "b/3", "b/2"]
+  check i.listSteps(["b", "a"]) == @["b/3", "b/2", "a/1", "a/4"]
 
 test "includes":
   var i = newLin()
@@ -102,10 +136,10 @@ test "includes":
   b.step "2": discard
   a.step "3": discard
 
-  check i.listSteps(["a"]) == @["a:1", "a:3"]
-  check i.listSteps(["b"]) == @["a:1", "b:2", "a:3"]
-  check i.listSteps(["a", "b"]) == @["a:1", "b:2", "a:3"]
-  check i.listSteps(["b", "a"]) == @["a:1", "b:2", "a:3"]
+  check i.listSteps(["a"]) == @["a/1", "a/3"]
+  check i.listSteps(["b"]) == @["a/1", "b/2", "a/3"]
+  check i.listSteps(["a", "b"]) == @["a/1", "b/2", "a/3"]
+  check i.listSteps(["b", "a"]) == @["a/1", "b/2", "a/3"]
 
 test "includes nested":
   var i = newLin()
@@ -116,9 +150,9 @@ test "includes nested":
   a.step "1": discard
   b.step "2": discard
   c.step "3": discard
-  check i.listSteps(["c"]) == @["a:1", "b:2", "c:3"]
-  check i.listSteps(["c", "a"]) == @["a:1", "b:2", "c:3"]
-  check i.listSteps(["b", "c", "a"]) == @["a:1", "b:2", "c:3"]
+  check i.listSteps(["c"]) == @["a/1", "b/2", "c/3"]
+  check i.listSteps(["c", "a"]) == @["a/1", "b/2", "c/3"]
+  check i.listSteps(["b", "c", "a"]) == @["a/1", "b/2", "c/3"]
 
 test "variable default":
   var o:seq[string]
