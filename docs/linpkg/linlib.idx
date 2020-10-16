@@ -1,0 +1,30 @@
+UnknownFlag	linpkg/linlib.html#UnknownFlag	linlib: UnknownFlag	
+DuplicateName	linpkg/linlib.html#DuplicateName	linlib: DuplicateName	
+SkipSignal	linpkg/linlib.html#SkipSignal	linlib: SkipSignal	
+Sequence	linpkg/linlib.html#Sequence	linlib: Sequence	
+Variable	linpkg/linlib.html#Variable	linlib: Variable	
+newLin	linpkg/linlib.html#newLin	linlib: newLin(): Lin	
+sequence	linpkg/linlib.html#sequence,Lin,string,string,seq[string]	linlib: sequence(lin: Lin; name: string; help = &quot;&quot;; reverse = false;\n         includes: seq[string] = @[]; default = false): Sequence	
+seqname	linpkg/linlib.html#seqname,string	linlib: seqname(x: string): string	
+collectSteps	linpkg/linlib.html#collectSteps,Lin,openArray[string]	linlib: collectSteps(lin: Lin; keys: openArray[string]): seq[Step]	
+listSteps	linpkg/linlib.html#listSteps,Lin,openArray[string]	linlib: listSteps(lin: Lin; keys: openArray[string]): seq[string]	
+helptext	linpkg/linlib.html#helptext,Lin	linlib: helptext(lin: Lin): string	
+strVar	linpkg/linlib.html#strVar,Lin,string,string,string	linlib: strVar(lin: Lin; name: string; default = &quot;&quot;; help = &quot;&quot;): Variable	
+boolVar	linpkg/linlib.html#boolVar,Lin,string,string	linlib: boolVar(lin: Lin; name: string; help = &quot;&quot;): Variable	
+extractVarFlags	linpkg/linlib.html#extractVarFlags,Lin,openArray[string]	linlib: extractVarFlags(lin: Lin; params: openArray[string]): seq[string]	
+step	linpkg/linlib.html#step.t,Sequence,string,untyped	linlib: step(s: Sequence; nm: string; fun: untyped)	
+fullname	linpkg/linlib.html#fullname,Step	linlib: fullname(s: Step): string	
+run	linpkg/linlib.html#run,Lin,openArray[string]	linlib: run(lin: Lin; args: openArray[string]): bool	
+cli	linpkg/linlib.html#cli,Lin	linlib: cli(lin: Lin)	
+SubprocessError	linpkg/linlib.html#SubprocessError	linlib: SubprocessError	
+run	linpkg/linlib.html#run,seq[string]	linlib: run(args: seq[string]): RunResult	
+sh	linpkg/linlib.html#sh,varargs[string]	linlib: sh(args: varargs[string])	
+shmaybe	linpkg/linlib.html#shmaybe,varargs[string]	linlib: shmaybe(args: varargs[string])	
+cd	linpkg/linlib.html#cd.t,string,untyped	linlib: cd(newdir: string; body: untyped): untyped	
+skip	linpkg/linlib.html#skip,string	linlib: skip(reason = &quot;&quot;)	
+newerSources	linpkg/linlib.html#newerSources,openArray[string],openArray[string]	linlib: newerSources(output: openArray[string]; sources: openArray[string]): seq[string]	
+hasNewerSources	linpkg/linlib.html#hasNewerSources,openArray[string],openArray[string]	linlib: hasNewerSources(output: openArray[string]; sources: openArray[string]): bool	
+olderThan	linpkg/linlib.html#olderThan,openArray[string],openArray[string]	linlib: olderThan(output: openArray[string]; input: openArray[string]): bool	
+olderThan	linpkg/linlib.html#olderThan,string,openArray[string]	linlib: olderThan(output: string; input: openArray[string]): bool	
+olderThan	linpkg/linlib.html#olderThan,openArray[string],string	linlib: olderThan(output: openArray[string]; input: string): bool	
+olderThan	linpkg/linlib.html#olderThan,string,string	linlib: olderThan(output: string; input: string): bool	

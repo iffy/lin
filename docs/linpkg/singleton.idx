@@ -1,0 +1,4 @@
+cli	linpkg/singleton.html#cli	singleton: cli()	
+sequence	linpkg/singleton.html#sequence.t,varargs[untyped]	singleton: sequence(args: varargs[untyped]): untyped	
+strVar	linpkg/singleton.html#strVar.t,varargs[untyped]	singleton: strVar(args: varargs[untyped]): untyped	
+boolVar	linpkg/singleton.html#boolVar.t,varargs[untyped]	singleton: boolVar(args: varargs[untyped]): untyped	

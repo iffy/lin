@@ -72,7 +72,9 @@ Go [read the full docs](https://www.iffycan.com/lin/linlib.html), but here's a h
 | `shmaybe` | Run a subprocess, ignoring exit code |
 | `cd` | Run a block of code from within another directory |
 | `skip` | Abort the current step, but keep running subsequent steps |
-| `olderThan` | Determine if a set of output files are older than a set of input files |
+| `olderThan` | DEPRECATED: Determine if a set of output files are older than a set of input files |
+| `hasNewerSources` | Return true if a rebuild should happen |
+| `newerSources` | Return the source files that are newer than the output file |
 
 Other helpful hints:
 

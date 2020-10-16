@@ -428,11 +428,52 @@ template cd*(newdir:string, body:untyped):untyped =
 proc skip*(reason = "") =
   raise newException(SkipSignal, reason)
 
-proc olderThan*(output:openArray[string], input:openArray[string]):bool =
+proc newerSources*(output:openArray[string], sources: openArray[string]): seq[string] =
+  ## Returns the set of sources files that are newer than the oldest
+  ## output file.  If anything is returned, a rebuild should happen.
+  ## 
+  ## .. code-block:: nim
+  ##   import lin, os
+  ## 
+  ##   let
+  ##     src = @["prog.nim", "prog2.nim"]
+  ##     dst = @["prog.out", "prog_stats.txt"]
+  ##   if dst.newerSources(src).len > 0:
+  ##      echo "Refreshing ..."
+  ##      # do something to generate the outputs
+  ##   else:
+  ##      echo "All done!"
+  assert len(sources) > 0, "Must include some source files"
+  var minTargetTime = low(Time)
+  for target in output:
+    try:
+      let targetTime = getLastModificationTime(target)
+      if minTargetTime == low(Time):
+        minTargetTime = targetTime
+      elif targetTime < minTargetTime:
+        minTargetTime = targetTime
+    except OSError:
+      # There is a missing output file, so every source is newer
+      return toSeq(sources)
+
+  for s in sources:
+    try:
+      let srcTime = getLastModificationTime(s)
+      if srcTime > minTargetTime:
+        result.add(s)
+    except OSError:
+      raise newException(CatchableError, "Error accessing source file: " & s)
+
+proc hasNewerSources*(output: openArray[string], sources: openArray[string]): bool =
+  ## Returns true if a rebuild should happen because source files have
+  ## been updated.
+  return output.newerSources(sources).len > 0
+
+proc olderThan*(output:openArray[string], input:openArray[string]):bool {.deprecated: "Use newerSources or hasNewerSources instead".}=
   ## Returns true if any ``src`` is newer than the oldest ``targets``.
   ##
   ## .. code-block:: nim
-  ##   import nake, os
+  ##   import lin, os
   ##
   ##   let
   ##     src = @["prog.nim", "prog2.nim"]
