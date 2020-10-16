@@ -21,5 +21,6 @@ jobs:
         nim-version: ${{ matrix.nimversion }}
     - name: Test
       run: |
+        nimble install
         nimble test
         nimble refresh
