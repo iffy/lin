@@ -138,7 +138,7 @@ proc collectSteps*(lin:Lin, keys:openArray[string]):seq[Step] =
   # Group them by direction
   var
     groups:seq[tuple[reverse:bool, keys:seq[string]]]
-  groups.add((reverse:false, keys: @[]))
+  groups.add((reverse:false, keys: newSeq[string]()))
   for key in lin.expandRanges(keys):
     let seqname = key.seqname
     if not lin.sequences.hasKey(seqname):
@@ -146,7 +146,7 @@ proc collectSteps*(lin:Lin, keys:openArray[string]):seq[Step] =
     let s = lin.sequences[seqname]
     if s.reverse != groups[^1].reverse:
       # new direction
-      groups.add((reverse:s.reverse, keys: @[]))
+      groups.add((reverse:s.reverse, keys: newSeq[string]()))
     groups[^1].keys.add(key)
 
   for group in groups:
