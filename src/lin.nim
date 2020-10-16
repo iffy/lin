@@ -6,12 +6,13 @@ export singleton
 when isMainModule:
   import os
   import osproc
+  putEnv("LIN_BIN", getAppFilename())
   var
     dirname = getCurrentDir()
     path: string
   while true:
     path = dirname / "linseed.nim"
-    if path.existsFile():
+    if path.fileExists():
       break
     else:
       if dirname == "":

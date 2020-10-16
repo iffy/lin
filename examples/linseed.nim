@@ -27,5 +27,10 @@ build.step "second":
     echo "DEBUG OUTPUT"
   sleep(20)
 
+build.step "third":
+  echo "running third"
+  cd "sub":
+    sh "lin", "build"
+
 if isMainModule:
   cli()

@@ -10,6 +10,7 @@ import tables
 import terminal
 export terminal
 import times
+import std/exitprocs
 
 type
   UnknownFlag* = object of CatchableError
@@ -293,21 +294,32 @@ proc stamp(d:Duration):string =
   "(" & $d.inSeconds & "s)"
 
 proc run*(lin:Lin, args:openArray[string]):bool =
-  system.addQuitProc(resetAttributes)
+  addExitProc(resetAttributes)
 
   let steps = lin.collectSteps(args)
   let grand_start = getTime()
   result = true
 
+  let orig_parentdir = getEnv("LIN_PARENTDIR", "")
+  let orig_parentstep = getEnv("LIN_PARENTSTEP", "")
+  
+  let step_prefix = if orig_parentstep == "": "" else: orig_parentstep & "/" & getAppDir().relativePath(orig_parentdir) & "/"
+
   for stepn,step in steps:
     let left = steps.len - stepn
+    let fq_stepnumber = step_prefix & $left
     var
       msg:string
       res:RunStatus
       start = getTime()
       step_total: Duration
-    stderr.styledWriteLine("[lin] ", styleReverse, &"{left} {step.fullname}")
+    stderr.styledWrite(styleDim, "[lin] ")
+    stderr.styledWriteLine(styleReverse, &"{fq_stepnumber} {step.fullname}")
     try:
+      if getEnv("LIN_PARENTDIR", "") == "":
+        # root invocation
+        putEnv("LIN_PARENTDIR", getAppDir())
+      putEnv("LIN_PARENTSTEP", fq_stepnumber)
       step.fn()
       step_total = getTime() - start
       res = resOk
@@ -317,6 +329,9 @@ proc run*(lin:Lin, args:openArray[string]):bool =
     except:
       res = resFail
       msg = getCurrentExceptionMsg()
+    finally:
+      putEnv("LIN_PARENTSTEP", orig_parentstep)
+      putEnv("LIN_PARENTDIR", orig_parentdir)
     
     var
       color = fgGreen
@@ -332,14 +347,16 @@ proc run*(lin:Lin, args:openArray[string]):bool =
       color = fgCyan
       code = "skipped"
 
-    stderr.styledWrite("[lin] ", color, styleReverse, &"{left} {step.fullname}")
+    stderr.styledWrite(styleDim, "[lin] ")
+    stderr.styledWrite(color, styleReverse, &"{fq_stepnumber} {step.fullname}")
     stderr.styledWriteLine(color, &" done {code} {step_total.stamp} {msg}")
     if res == resFail:
       result = false
       break
   
-  let grand_total = getTime() - grand_start
-  stderr.writeLine(&"[lin] all done {grand_total.stamp}")
+  if orig_parentdir == "":
+    let grand_total = getTime() - grand_start
+    stderr.styledWriteLine(styleDim, &"[lin] all done {grand_total.stamp}")
 
 proc cli*(lin:Lin) =
   setStdIoUnbuffered()
@@ -376,8 +393,9 @@ type
 
 proc run*(args:seq[string]):RunResult =
   let cmdstr = args.join(" ")
-  stderr.styledWriteLine("[lin] ", styleDim, &"# {cmdstr}")
-  var p = startProcess(args[0], args = args[1..^1], options = {poParentStreams, poUsePath})
+  stderr.styledWriteLine(styleDim, "[lin] ", &"# {cmdstr}")
+  let cmd = if args[0] == "lin": getEnv("LIN_BIN", args[0]) else: args[0]
+  var p = startProcess(cmd, args = args[1..^1], options = {poParentStreams, poUsePath})
   let rc = p.waitForExit()
   p.close()
   result = (cmdstr, rc)
@@ -399,12 +417,12 @@ template cd*(newdir:string, body:untyped):untyped =
     newabs = newdir.absolutePath
   try:
     if newabs != olddir:
-      stderr.styledWriteLine("[lin] ", styleDim, "# cd " & newabs.relativePath(olddir))
+      stderr.styledWriteLine(styleDim, "[lin] ", "# cd " & newabs.relativePath(olddir))
       setCurrentDir(newabs)
     body
   finally:
     if newabs != olddir:
-      stderr.styledWriteLine("[lin] ", styleDim, "# cd " & olddir.relativePath(newabs))
+      stderr.styledWriteLine(styleDim, "[lin] ", "# cd " & olddir.relativePath(newabs))
       setCurrentDir(olddir)
 
 proc skip*(reason = "") =
