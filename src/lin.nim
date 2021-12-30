@@ -23,6 +23,7 @@ when isMainModule:
   let params = commandLineParams()
   var args = @[
     "c",
+    "-d:lin",
     "-r",
     "--debuginfo:off",
     "--hints:off",
