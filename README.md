@@ -17,19 +17,19 @@ var build = sequence("build", help = "Say hello")
 var clean = sequence("clean", help = "Clean up hello", reverse = true)
 
 var name = strVar("name", help = "Name to greet", default = "Bob")
-var shout = boolVar("shout", help = "If given, shout")
+var yell = boolVar("yell", help = "If given, yell")
 
 build.step "hello":
   stdout.write "Hello, "
   stdout.write name.strVal
-  if shout.boolVal:
+  if yell.boolVal:
     stdout.write "!"
   stdout.write "\L"
 
 clean.step "hello":
   stdout.write "Goodbye, "
   stdout.write name.strVal
-  if shout.boolVal:
+  if yell.boolVal:
     stdout.write "!"
   stdout.write "\L"
 
@@ -70,6 +70,9 @@ Go [read the full docs](https://www.iffycan.com/lin/linlib.html), but here's a h
 | `boolVar` | Define a boolean variable |
 | `sh` | Run a subprocess, aborting on error |
 | `shmaybe` | Run a subprocess, ignoring exit code |
+| `shout` | Run a subprocess, returning stdout |
+| `sherr` | Run a subprocess, returning stderr |
+| `shouterr` | Run a subprocess, returning (stdout, stderr) |
 | `cd` | Run a block of code from within another directory |
 | `skip` | Abort the current step, but keep running subsequent steps |
 | `olderThan` | DEPRECATED: Determine if a set of output files are older than a set of input files |

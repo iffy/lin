@@ -1,16 +1,17 @@
-import algorithm
-import os
-export os
-import osproc
-import re
-import sequtils
-import strformat
-import strutils
-import tables
-import terminal
-export terminal
-import times
+import std/algorithm
 import std/exitprocs
+import std/os; export os
+import std/osproc
+import std/re
+import std/sequtils
+import std/streams
+import std/strformat
+import std/strutils
+import std/tables
+import std/terminal ; export terminal
+import std/times
+
+const hasThreads = compileOption("threads")
 
 type
   UnknownFlag* = object of CatchableError
@@ -390,15 +391,77 @@ type
   RunResult = tuple
     cmdstr: string
     rc: int
+    stdout: string
+    stderr: string
+  FileHandleReader = tuple
+    stream: Stream
+    ch: ptr Channel[string]
+    isOut: bool
+    capture: bool
 
-proc run*(args:seq[string]):RunResult =
+when hasThreads:
+  proc readFromStream(fh: FileHandleReader) {.thread.} =
+    let label = if fh.isOut: "OUT: " else: "ERR: "
+    if fh.capture:
+      let data = fh.stream.readAll()
+      (fh.ch[]).send(data)
+    else:
+      let passthru = if fh.isOut: stdout else: stderr
+      while not fh.stream.atEnd:
+        var data: string
+        try:
+          fh.stream.read(data)
+        except:
+          break
+        try:
+          passthru.write(data)
+        except:
+          discard
+
+proc run*(args:seq[string], captureStdout, captureStderr = false): RunResult =
   let cmdstr = args.join(" ")
   stderr.styledWriteLine(styleDim, "[lin] ", &"# {cmdstr}")
   let cmd = if args[0] == "lin": getEnv("LIN_BIN", args[0]) else: args[0]
-  var p = startProcess(cmd, args = args[1..^1], options = {poParentStreams, poUsePath})
-  let rc = p.waitForExit()
+  var opts = {poUsePath}
+  if captureStdout or captureStderr:
+    discard
+  else:
+    opts.incl poParentStreams
+  var p = startProcess(cmd, args = args[1..^1], options = opts)
+  var
+    outs: string
+    errs: string
+  if poParentStreams in opts:
+    # let it run
+    discard p.waitForExit()
+  else:
+    # pump the output
+    when not hasThreads:
+      raise ValueError.newException("Must run lin with --threads:on to capture stdout/stderr")
+    else:
+      var
+        tout: Thread[FileHandleReader]
+        terr: Thread[FileHandleReader]
+        outChan: Channel[string]
+        errChan: Channel[string]
+      if captureStdout:
+        var outstream = p.outputStream()
+        outChan.open()
+        tout.createThread(readFromStream, (outstream, addr outChan, true, captureStdout))
+      if captureStderr:
+        var errstream = p.errorStream()
+        errChan.open()
+        terr.createThread(readFromStream, (errstream, addr errChan, false, captureStderr))
+      if captureStdout:
+        outs = outChan.recv()
+      if captureStderr:
+        errs = errChan.recv()
+      joinThreads([tout, terr])
+      discard p.waitForExit()
+
+  let rc = p.peekExitCode()
   p.close()
-  result = (cmdstr, rc)
+  result = (cmdstr, rc, outs, errs)
 
 proc sh*(args:varargs[string]) =
   ## Run a subprocess, failing if it fails
@@ -409,6 +472,19 @@ proc sh*(args:varargs[string]) =
 proc shmaybe*(args:varargs[string]) =
   ## Run a subprocess, ignoring exit code
   discard run(@args)
+
+proc shout*(args: varargs[string]): string =
+  ## Run a subprocess, returning stdout as a string
+  run(@args, captureStdout = true).stdout
+
+proc sherr*(args: varargs[string]): string =
+  ## Run a subprocess, returning stderr as a string
+  run(@args, captureStderr = true).stderr
+
+proc shouterr*(args: varargs[string]): tuple[o: string, e: string] =
+  ## Run a subprocess, returning stdout + stderr as a string
+  let res = run(@args, captureStdout = true, captureStderr = true)
+  (res.stdout, res.stderr)
 
 template cd*(newdir:string, body:untyped):untyped =
   ## Do some code within a new directory
