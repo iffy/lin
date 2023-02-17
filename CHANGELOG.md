@@ -1,3 +1,7 @@
+# v0.5.2 - 2023-02-17
+
+- **FIX:** Enable --threads:on by default
+
 # v0.5.1 - 2023-02-17
 
 - **FIX:** Don't require threads on unless you capture output

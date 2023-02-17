@@ -27,6 +27,7 @@ when isMainModule:
     "-r",
     "--debuginfo:off",
     "--hints:off",
+    "--threads:on",
     "--verbosity:0",
     "linseed.nim",
   ]
