@@ -249,6 +249,15 @@ test "shmaybe":
   shmaybe "true"
   shmaybe "false"
 
+test "shout":
+  check shout("python", "-c", "import sys; sys.stdout.write('foo'); sys.stderr.write('bar')") == "foo"
+
+test "sherr":
+  check sherr("python", "-c", "import sys; sys.stdout.write('foo'); sys.stderr.write('bar')") == "bar"
+
+test "shouterr":
+  check shouterr("python", "-c", "import sys; sys.stdout.write('foo'); sys.stderr.write('bar')") == ("foo", "bar")
+
 test "cd":
   withtmp:
     let expected = tmpdir.absolutePath
