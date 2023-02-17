@@ -393,13 +393,14 @@ type
     rc: int
     stdout: string
     stderr: string
-  FileHandleReader = tuple
-    stream: Stream
-    ch: ptr Channel[string]
-    isOut: bool
-    capture: bool
 
 when hasThreads:
+  type
+    FileHandleReader = tuple
+      stream: Stream
+      ch: ptr Channel[string]
+      isOut: bool
+      capture: bool
   proc readFromStream(fh: FileHandleReader) {.thread.} =
     let label = if fh.isOut: "OUT: " else: "ERR: "
     if fh.capture:
