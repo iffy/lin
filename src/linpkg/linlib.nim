@@ -351,6 +351,8 @@ proc run*(lin:Lin, args:openArray[string]):bool =
     stderr.styledWrite(styleDim, "[lin] ")
     stderr.styledWrite(color, styleReverse, &"{fq_stepnumber} {step.fullname}")
     stderr.styledWriteLine(color, &" done {code} {step_total.stamp} {msg}")
+    stderr.flushFile()
+    stdout.flushFile()
     if res == resFail:
       result = false
       break
