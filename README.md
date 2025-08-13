@@ -82,3 +82,7 @@ Go [read the full docs](https://www.iffycan.com/lin/linlib.html), but here's a h
 Other helpful hints:
 
 - Sequences can include other sequences, thus chaining them together.  See the `includes` param.
+
+# GitHub Actions
+
+When run on a Github Actions runner, step output will be put into folds by default. To disable this, set `LIN_DISABLE_FOLDS=true`
