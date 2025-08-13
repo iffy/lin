@@ -14,6 +14,13 @@ jobs:
       matrix:
         nimversion: ["binary:1.6", "binary:stable"]
         os: [ubuntu-latest, macOS-latest, windows-latest]
+        exclude:
+        - os: macOS-latest
+          nimversion: binary:1.6
+        include:
+        - os: macOS-13
+          nimversion: binary:1.6
+          
     steps:
     - uses: actions/checkout@v1
     - uses: iffy/install-nim@v5
