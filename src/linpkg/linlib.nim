@@ -297,6 +297,8 @@ proc stamp(d:Duration):string =
 proc run*(lin:Lin, args:openArray[string]):bool =
   addExitProc(resetAttributes)
 
+  let isGITHUBACTIONS = getEnv("GITHUB_ACTIONS") == "true"
+  let doGithubActionsGrouping = isGITHUBACTIONS and getEnv("LIN_DISABLE_FOLDS") == ""
   let steps = lin.collectSteps(args)
   let grand_start = getTime()
   result = true
@@ -314,6 +316,8 @@ proc run*(lin:Lin, args:openArray[string]):bool =
       res:RunStatus
       start = getTime()
       step_total: Duration
+    if doGithubActionsGrouping:
+      echo &"::group::{fq_stepnumber} {step.fullname}"
     stderr.styledWrite(styleDim, "[lin] ")
     stderr.styledWriteLine(styleReverse, &"{fq_stepnumber} {step.fullname}")
     try:
@@ -353,6 +357,8 @@ proc run*(lin:Lin, args:openArray[string]):bool =
     stderr.styledWriteLine(color, &" done {code} {step_total.stamp} {msg}")
     stderr.flushFile()
     stdout.flushFile()
+    if doGithubActionsGrouping:
+      echo "::endgroup::"
     if res == resFail:
       result = false
       break
