@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.5.3"
+version       = "0.6.0"
 author        = "Matt Haggard"
 description   = "A linear build system"
 license       = "MIT"

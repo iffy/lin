@@ -1,3 +1,7 @@
+# v0.6.0 - 2025-08-13
+
+- **NEW:** Fold output in Github Actions
+
 # v0.5.3 - 2025-08-13
 
 - **FIX:** stdout and stderr are flushed after each step to avoid step output mixing.
