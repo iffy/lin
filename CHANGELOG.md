@@ -1,3 +1,7 @@
+# v0.5.3 - 2025-08-13
+
+- **FIX:** stdout and stderr are flushed after each step to avoid step output mixing.
+
 # v0.5.2 - 2023-02-17
 
 - **FIX:** Enable --threads:on by default
