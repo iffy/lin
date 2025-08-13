@@ -317,7 +317,7 @@ proc run*(lin:Lin, args:openArray[string]):bool =
       start = getTime()
       step_total: Duration
     if doGithubActionsGrouping:
-      echo &"::group::{fq_stepnumber} {step.fullname}"
+      stderr.writeLine &"::group::{fq_stepnumber} {step.fullname}"
       stdout.flushFile()
       stderr.flushFile()
     stderr.styledWrite(styleDim, "[lin] ")
@@ -356,7 +356,7 @@ proc run*(lin:Lin, args:openArray[string]):bool =
 
     if doGithubActionsGrouping:
       stderr.flushFile()
-      echo "::endgroup::"
+      stderr.writeLine "::endgroup::"
       stdout.flushFile()
     stderr.styledWrite(styleDim, "[lin] ")
     stderr.styledWrite(color, styleReverse, &"{fq_stepnumber} {step.fullname}")
