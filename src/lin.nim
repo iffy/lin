@@ -22,9 +22,8 @@ when isMainModule:
   setCurrentDir(dirname)
   let params = commandLineParams()
   var args = @[
-    "c",
+    "r",
     "-d:lin",
-    "-r",
     "--debuginfo:off",
     "--hints:off",
     "--threads:on",
