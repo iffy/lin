@@ -1,3 +1,7 @@
+# v0.7.0 - 2025-09-04
+
+- **NEW:** Use `nim r` rather than `nim c -r` to avoid polluting things with built binaries
+
 # v0.6.0 - 2025-08-13
 
 - **NEW:** Fold output in Github Actions
